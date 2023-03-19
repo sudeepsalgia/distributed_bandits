@@ -37,7 +37,6 @@ class DELB:
 				g_optimal = np.eye(self.bandit.d)
 			else:
 				max_reward = min(1, theta_hat_norm)
-				# print(theta_hat_norm)
 				B = np.eye(self.bandit.d) - np.outer(theta_hat, theta_hat)
 				D, V = np.linalg.eig(B)
 				V_new = np.transpose(V[:, D > 1e-10])
@@ -53,7 +52,6 @@ class DELB:
 		self.regret = np.zeros(int(10*self.bandit.T))
 		self.uplink_comm_cost = 0
 		self.downlink_comm_cost = 0
-		# self.set_parameters(C=C)
 
 	def delb_agent(self, arm_indices, n_plays):
 
@@ -62,20 +60,13 @@ class DELB:
 		for n in n_plays:
 			total_plays += n
 		regret_loc = np.zeros(int(total_plays))
-		# print('function val')
-		# print(arm_indices)
-		# print(n_plays)
 		curr_idx = 0
 		for i in range(len(arm_indices)):
 			true_reward = self.bandit.theta_star @ self.curr_g_optimal_set[arm_indices[i]].T
 			rewards.append(true_reward + np.random.normal(loc=0.0, scale=self.bandit.noise_sigma)/np.sqrt(n_plays[i]))
 			regret_loc[curr_idx:(curr_idx + int(n_plays[i]))] = self.bandit.max_reward - true_reward
 			curr_idx += int(n_plays[i])
-			# self.downlink_comm_cost += self.transmit_size
 			self.uplink_comm_cost += self.transmit_size
-		# print(curr_idx)
-		# if self.transmit == 'log':
-		# Add this code
 
 		return rewards, regret_loc
 
@@ -92,12 +83,10 @@ class DELB:
 			n_arms = np.size(self.curr_g_optimal_set, 0)
 			pulls_per_arm = int(np.ceil(self.C*(4**l)*(self.bandit.d**2)*np.log(self.bandit.M*self.bandit.T)/n_arms))
 			pulls_per_agent = int(np.ceil(pulls_per_arm*n_arms/self.bandit.M))
-			# print(pulls_per_agent)
 			curr_arm_idx, curr_agent_idx = 0, 0
 			pulls_rem_arm, pulls_rem_agent = pulls_per_arm, pulls_per_agent
 			arm_indices, n_plays = [], []
 			arm_indices_loc, n_plays_loc = [curr_arm_idx], []
-			# print(curr_agent_idx < self.bandit.M)
 			while ((curr_arm_idx < n_arms) and (curr_agent_idx < self.bandit.M)):
 				if pulls_rem_agent >= pulls_rem_arm:
 					n_plays_loc.append(pulls_rem_arm)
@@ -128,32 +117,20 @@ class DELB:
 				n_plays.append(n_plays_loc)
 				arm_indices_loc, n_plays_loc = [curr_arm_idx], []    
 
-
-			# print(arm_indices)
-			# print(arm_indices_loc)
-			# print(n_plays_loc)
-				# print(arm_indices_loc)
-				# print(n_plays_loc)
-
 			rewards = np.zeros(int(n_arms))
 
-			# print(n_plays)
 
 			for m in range(self.bandit.M):
 				reward_loc, reg_loc = self.delb_agent(arm_indices[m], n_plays[m])
 				self.downlink_comm_cost += len(arm_indices[m])*(np.ceil(np.log2(n_arms)) + np.ceil(np.log2(pulls_per_agent)))
 				for r, a, n in zip(reward_loc, arm_indices[m], n_plays[m]):
 					rewards[a] += r*n
-				# print(n_plays[m])
-				# print(np.size(reg_loc))
 				self.regret[reg_idx:(reg_idx + len(reg_loc))] += reg_loc
 
 			reg_idx += pulls_per_agent
 			if reg_idx > self.bandit.T:
 				terminate = True
 				break
-
-			# rewards /= pulls_per_arm
 
 			X = 0
 			V = 0
@@ -165,7 +142,6 @@ class DELB:
 			theta_hat = np.linalg.solve(V, X)
 			theta_hat /= np.linalg.norm(theta_hat)
 			self.downlink_comm_cost += self.bandit.d*self.transmit_size
-			# print(theta_hat)
 			l += 1
 			if self.is_unit_ball:
 				self.curr_g_optimal_set = self.g_optimal_unit_ball(theta_hat, l)

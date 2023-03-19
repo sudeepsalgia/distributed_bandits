@@ -74,15 +74,10 @@ class FedPE:
 				true_reward = self.bandit.theta_star @ action_set_loc[n].T
 				theta_estimates[n] = (true_reward + np.random.normal(scale=self.bandit.noise_sigma)/np.sqrt(n_plays[n]))*action_set_loc[n]
 				regret[curr_idx:(curr_idx + n_plays[n])] = self.bandit.max_reward[agent_idx] - true_reward
-				# if (self.bandit.max_reward[agent_idx] - true_reward < 0):
-				# 	print('here')
-				# 	print(action_set_loc)
-				# 	print(self.bandit.action_set[agent_idx])
 				curr_idx += n_plays[n]
 				self.uplink_comm_cost += self.bandit.d*self.transmit_size
 
 		if curr_idx < self.phase_length:
-			# print(self.optimal_actions[agent_idx])
 			true_reward = self.bandit.theta_star @ self.optimal_actions[agent_idx].T
 			regret[curr_idx:self.phase_length] = self.bandit.max_reward[agent_idx] - true_reward
 
@@ -92,7 +87,6 @@ class FedPE:
 		self.theta_estimates = []
 		for m in range(self.bandit.M):
 			true_rewards = self.action_set[m] @ self.bandit.theta_star.T
-			# print(np.size(true_rewards))
 			y = true_rewards + np.random.normal(scale=self.bandit.noise_sigma, size=np.size(true_rewards))
 			self.theta_estimates.append(np.diag(y) @ self.action_set[m])
 
@@ -134,39 +128,6 @@ class FedPE:
 					all_action_list.append(theta_hat/np.linalg.norm(theta_hat))
 
 			g_opt_soln , g_optimal_idxs = self.bandit.g_optimal_design(A=copy.deepcopy(np.array(all_action_list)), n_actions=int(self.bandit.d*3))
-			# _, D, _ = np.linalg.svd(g_opt_soln)
-			# print(np.min(np.abs(D)))
-			# print(np.linalg.matrix_rank(g_opt_soln))
-
-			#### SHORTHAND CODE
-			# X_loc = 0
-			# V_loc = 0
-			# agent_plays = np.zeros(self.bandit.M, dtype=int)
-			# play_per_action = int(np.ceil(2**self.p/len(g_optimal_idxs)))
-			# reg_loc = np.zeros(shape=(self.bandit.M, self.phase_length))
-			# # print(np.shape(g_opt_soln))
-			# # print(len(g_optimal_idxs))
-			# for i in range(len(g_optimal_idxs)):
-			# 	true_reward = self.bandit.theta_star @ g_opt_soln[i].T 
-			# 	y = true_reward + np.random.normal(scale=self.bandit.noise_sigma/np.sqrt(play_per_action))
-			# 	X_loc += play_per_action*y*g_opt_soln[i]
-			# 	V_loc += play_per_action*np.outer(g_opt_soln[i], g_opt_soln[i])/(np.linalg.norm(g_opt_soln[i])**2)
-			# 	agent_idx_loc = agent_idxs[int(g_optimal_idxs[i])]
-			# 	reg_loc[agent_idx_loc][(agent_plays[agent_idx_loc]*play_per_action):((agent_plays[agent_idx_loc]+1)*play_per_action)] = self.bandit.max_reward[agent_idx_loc] - true_reward
-			# 	agent_plays[agent_idx_loc] += 1
-
-			# V_p_global = np.linalg.pinv(V_loc)
-			# if np.linalg.matrix_rank(g_opt_soln) < self.bandit.d:
-			# 	theta_p = V_p_global @ X_loc
-			# else:
-			# 	theta_p = np.linalg.solve(V_loc, X_loc)
-
-			# for m in range(self.bandit.M):
-			# 	true_reward = self.bandit.theta_star @ self.optimal_actions[m].T
-			# 	reg_loc[m][(agent_plays[m]*play_per_action):] = self.bandit.max_reward[m] - true_reward
-
-			# self.regret[reg_idx:(reg_idx + self.phase_length)] = np.sum(reg_loc, axis=0)
-
 
 			#### ORIGINAL CODE
 
@@ -195,6 +156,35 @@ class FedPE:
 						V_p_local[self.action_idxs[m][k]] += n_plays[k]*np.outer(theta_hat, theta_hat)/(np.linalg.norm(theta_hat)**2)
 						theta_sum += n_plays[k]*theta_estimates_loc[k]
 
+
+			#### SHORTHAND IMPLEMENTATION
+
+			# X_loc = 0
+			# V_loc = 0
+			# agent_plays = np.zeros(self.bandit.M, dtype=int)
+			# play_per_action = int(np.ceil(2**self.p/len(g_optimal_idxs)))
+			# reg_loc = np.zeros(shape=(self.bandit.M, self.phase_length))
+			# for i in range(len(g_optimal_idxs)):
+			# 	true_reward = self.bandit.theta_star @ g_opt_soln[i].T 
+			# 	y = true_reward + np.random.normal(scale=self.bandit.noise_sigma/np.sqrt(play_per_action))
+			# 	X_loc += play_per_action*y*g_opt_soln[i]
+			# 	V_loc += play_per_action*np.outer(g_opt_soln[i], g_opt_soln[i])/(np.linalg.norm(g_opt_soln[i])**2)
+			# 	agent_idx_loc = agent_idxs[int(g_optimal_idxs[i])]
+			# 	reg_loc[agent_idx_loc][(agent_plays[agent_idx_loc]*play_per_action):((agent_plays[agent_idx_loc]+1)*play_per_action)] = self.bandit.max_reward[agent_idx_loc] - true_reward
+			# 	agent_plays[agent_idx_loc] += 1
+
+			# V_p_global = np.linalg.pinv(V_loc)
+			# if np.linalg.matrix_rank(g_opt_soln) < self.bandit.d:
+			# 	theta_p = V_p_global @ X_loc
+			# else:
+			# 	theta_p = np.linalg.solve(V_loc, X_loc)
+
+			# for m in range(self.bandit.M):
+			# 	true_reward = self.bandit.theta_star @ self.optimal_actions[m].T
+			# 	reg_loc[m][(agent_plays[m]*play_per_action):] = self.bandit.max_reward[m] - true_reward
+
+			# self.regret[reg_idx:(reg_idx + self.phase_length)] = np.sum(reg_loc, axis=0)
+
 			reg_idx += self.phase_length
 			if reg_idx > self.bandit.T:
 				terminate = True
@@ -202,7 +192,6 @@ class FedPE:
 			else:
 				for k in list(active_agents):
 					k = int(k)
-					# V_p_local[k] = np.linalg.pinv(V_p_local[k])
 					V_p_global += V_p_local[k]
 
 				if np.linalg.matrix_rank(g_opt_soln) < self.bandit.d:
@@ -212,17 +201,10 @@ class FedPE:
 					theta_p = np.linalg.solve(V_p_global, theta_sum)
 					V_p_global = np.linalg.pinv(V_p_global)
 
-				# V_p_global = np.linalg.pinv(V_p_global)
-				# theta_p = V_p_global @ theta_sum
-				# theta_p = theta_p/np.linalg.norm(theta_p)
 				self.p += 1
 
 				self.downlink_comm_cost += (self.bandit.d + self.bandit.d**2)*self.transmit_size 
 
-				##
-
-
-		# print(theta_p)
 
 
 

@@ -43,10 +43,8 @@ class LinearBandits:
 		for m in range(self.M):
 			action_set[m] = self.generate_discrete_action_space()
 			rewards = action_set[m] @ self.theta_star.T
-			# print(np.size(rewards))
 			self.max_reward[m] = np.max(rewards)
 			self.rewards[m] = rewards
-			# print(self.max_reward[m])
 
 		self.action_set = action_set
 		self.action_set_duplicate = action_set
@@ -79,8 +77,6 @@ class LinearBandits:
 			idxs = np.arange(start=1, stop=np.size(A, 0))
 			idxs_included = [0]
 			for n in range(1, n_actions):
-				# print(np.shape(A_updated))
-				# print(np.shape(g_optimal_set[n-1, :]))
 				inner_prods = A_updated @ g_optimal_set[n-1, :].T / np.linalg.norm(g_optimal_set[n-1, :])
 				abs_inner_prods = np.abs(inner_prods)
 				new_loc = np.where(abs_inner_prods == abs_inner_prods.min())
@@ -89,9 +85,6 @@ class LinearBandits:
 				g_optimal_set[n, :] = A_orig[new_loc, :]
 				A_orig = np.delete(A_orig, new_loc, axis=0)
 				A_updated = np.delete(A_updated, new_loc, axis=0)
-				# 
-				# print(np.shape(A_updated))
-				# print(np.shape(g_optimal_set[n-1, :]))
 				idxs_included.append(idxs[new_loc])
 				idxs = np.delete(idxs, new_loc)
 

@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 class DisBELUCB:
 	def __init__(self, bandit):
@@ -18,7 +19,6 @@ class DisBELUCB:
 		self.beta = 1*np.sqrt(np.log(4*self.bandit.K*self.bandit.M*self.bandit.T)) + np.sqrt(self._lambda)
 		z = (self.bandit.M*self.bandit.T/self.bandit.d)
 		self.a = np.sqrt(self.bandit.T)*np.power(z, 1/np.log2(z))
-		# self.g_optimal_list = [self.bandit.g_optimal_design(A=x, n_actions=self.bandit.d+2) for x in self.bandit.action_set]
 
 	def reset(self):
 
@@ -45,7 +45,7 @@ class DisBELUCB:
 		g_optimal_size = self.bandit.d + 2
 		A_matrix_core_set = self._lambda*np.eye(self.bandit.d)
 		for i in range(L):
-			g_optimal_solution, _ = bandit.g_optimal_design(A=core_set[i], n_actions=g_optimal_size)
+			g_optimal_solution, _ = bandit.g_optimal_design(A=copy.deepcopy(core_set[i]), n_actions=g_optimal_size)
 			cov_matrix = 0
 			for x in g_optimal_solution:
 				cov_matrix += np.outer(x, x)
@@ -76,7 +76,7 @@ class DisBELUCB:
 		return core_set
 
 	def disbelucb_agent(self, curr_action_set, T_n):
-		g_optimal_list = [self.bandit.g_optimal_design(A=x, n_actions=self.bandit.d+2)[0] for x in curr_action_set]
+		g_optimal_list = [self.bandit.g_optimal_design(A=copy.deepcopy(x), n_actions=self.bandit.d+2)[0] for x in curr_action_set]
 		action_set_idxs = np.floor(np.random.random(T_n)*self.bandit.N)
 		regret = np.zeros(T_n)
 		u = 0
@@ -109,9 +109,7 @@ class DisBELUCB:
 		n_actions = len(action_set)
 		means = np.zeros(n_actions)
 		std_devs = np.zeros(n_actions)
-		# print(np.shape(action_set))
 		for n in range(n_actions):
-			# print(action_set[n] @ Lambda_inv @ action_set[n].T)
 			std_devs[n] = np.sqrt(action_set[n] @ Lambda_inv @ action_set[n].T)
 			means[n] = theta @ action_set[n].T
 
@@ -142,6 +140,8 @@ class DisBELUCB:
 				u_sum += u_loc
 				lambda_agents.append(lambda_agent_loc)
 
+			self.downlink_comm_cost += self.transmit_size*self.bandit.d
+
 			for m in range(self.bandit.M):
 				lambda_m = self._lambda*np.eye(self.bandit.d) + lambda_agents[m]*(self.bandit.M*T_n)/2
 				theta_m = np.linalg.solve(lambda_m, u_sum)
@@ -152,7 +152,6 @@ class DisBELUCB:
 
 			t += T_n
 			n += 1
-			print(n)
 
 
 			 
