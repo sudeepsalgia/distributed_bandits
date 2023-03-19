@@ -24,6 +24,6 @@ The significant improvement of PLS in terms of communication also evident from t
 Note that the scaling with respect to the number of action significantly deteriorates the uplink cost for FED-PE and the dependence on d^2 worsens the downlink cost. On the other hand, PLS continues to enjoy both small uplink and downlink costs.
 
 3. DisBE-LUCB: We adopt the same experimental setup as considered in Amani et al. Instead of a distribution over 100 instances, we consider a distribution over 50 instances with K = 40 actions in each of them. The cumulative regret for this experiment is shown in DISBELUCB_PLS.png. Once again, PLS outperforms DisBE-LUCB despite not being designed for this stochastic setting. The communication costs represented as (uplink, downlink) pair are as follows:
-- DisBE-LUCB = (2000, 2000), PLS = (188.9, 309.5)
+- DisBE-LUCB = (2000, 2000), PLS = (188.9, 309.5)        
 PLS continues to have a lower communication cost even for this setting establishing its improved performance over existing studies.
 
